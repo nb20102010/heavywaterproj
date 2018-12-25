@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Elastic Beanstalk</title>
+	<style>
+		div {
+			margin-top: 30px;
+			border: solid 1px black;
+			padding: 5px;
+		}
+	</style>
+	<script>
+		function processFiles(files) {
+			var file = files[0];
+
+			var message = document.getElementById("message");
+			message.innerHTML = file.name;
+
+			var reader = new FileReader();
+			reader.onload = function (e) {
+				//var output = document.getElementById("fileOutput");
+				//output.textContent = e.target.result;
+				//  console.log(e.target.result);
+				var fileText = e.target.result;
+
+
+				var reader2 = new FileReader()
+
+				var request = new XMLHttpRequest();
+				request.open('GET', './cnts.json');
+				request.responseType = 'text';
+				request.send();
+				request.onload = function () {
+				    console.log(request.responseType);
+					var cntsText = "" + request.responseText;
+
+					var cnts = JSON.parse(cntsText);
+
+					var request2 = new XMLHttpRequest();
+					request2.open('GET', 'map.json');
+					request2.responseType = 'text';
+					request2.send();
+					request2.onload = function () {
+						var mapText = "" + request2.responseText;
+						var map = JSON.parse(mapText);
+						var words = fileText.split(" ");
+						//   console.log(words);
+						var maxpoint = 0.0;
+						var secpoint = 0.0;
+						var decision = '';
+						for (var type in map) {
+							var point = 0.0;
+							for (var i = 0; i < words.length; i++) {
+							//	console.log(words[i]);
+								if (map[type][words[i]] != null) {
+									point += parseFloat(map[type][words[i]]) / parseFloat(cnts[type]);
+								}
+							}
+							if (point > maxpoint) {
+								decision = type;
+								secpoint = maxpoint;
+								maxpoint = point;
+							}
+						}
+						var prob = maxpoint / (maxpoint+secpoint);
+						document.getElementById('decision').innerHTML = decision;
+						document.getElementById('confidence').innerHTML = prob;
+					}
+				}
+
+			};
+			reader.readAsText(file);
+		}
+	</script>
+</head>
+  <body>
+	<h1>File Classifier</h1>
+  	<input id="fileInput" type="file" size="50" onchange="processFiles(this.files)">
+  	<div id="message"></div>>
+	<h3>File Type Prediction:</h3>
+  	<div id="decision"></div>
+	<h3>Confidence</h3>
+	<div id="confidence"></div>
+  </body>
+</html>
